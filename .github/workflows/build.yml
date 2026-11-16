@@ -1,0 +1,55 @@
+name: Build Android System Diagnostic
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate shell scripts
+        run: |
+          set -euo pipefail
+          for variant in asd-adb asd-root; do
+            test -f "modules/$variant/module.prop"
+            test -f "modules/$variant/action.sh"
+            test -f "modules/$variant/scripts/diagnose.sh"
+            grep -q '^id=' "modules/$variant/module.prop"
+            grep -q '^usesShellBridge=true$' "modules/$variant/module.prop"
+            sh -n "modules/$variant/action.sh"
+            sh -n "modules/$variant/scripts/diagnose.sh"
+          done
+      - name: Package ZIPs
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          for variant in asd-adb asd-root; do
+            name="${variant#asd-}"
+            (cd "modules/$variant" && zip -qr "../../dist/ASD-${name^^}.zip" .)
+          done
+          (cd dist && sha256sum *.zip > SHA256SUMS)
+      - name: Validate archive layout
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          for archive in Path("dist").glob("*.zip"):
+              with ZipFile(archive) as z:
+                  names = z.namelist()
+                  assert "module.prop" in names
+                  assert "action.sh" in names
+                  assert "scripts/diagnose.sh" in names
+                  assert all(not n.startswith("/") and ".." not in Path(n).parts for n in names)
+              print("OK:", archive)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-system-diagnostic-${{ github.sha }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 30
