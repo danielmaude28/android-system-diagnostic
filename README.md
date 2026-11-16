@@ -12,30 +12,35 @@ Shizuku Next implements the Nightzuku/Shevery ADB module format. A module does n
 - ADB-started server: normally Android `shell` identity.
 - Root-started server: root identity, when the app's supported root start method is used.
 
-The two ZIPs are therefore separate module identities and policy profiles, not privilege-escalation mechanisms. ASD-ROOT checks that it is actually UID 0 and exits safely otherwise. No script attempts to gain root.
+The two ZIPs are separate module identities and policy profiles, not privilege-escalation mechanisms. ASD-ROOT checks that it is actually UID 0 and exits safely otherwise. No script attempts to gain root.
 
-## Current scope (v0.1.0)
+## Current scope
 - Device/build/ABI/kernel information
 - SELinux and Verified Boot property observations
-- Root indicator inventory (detection only; no hiding or bypass)
-- Shizuku execution identity and basic service observations
-- Plain-text diagnostic report
+- Root indicator and KernelSU CLI observations (detection only)
+- Shizuku process and Binder observations
+- Timestamped plain-text report export
+- Root auto-start and persistence observations, with unknown states kept explicitly unknown
 
-All checks are read-only. No boot, system, security, banking-app, or integrity settings are modified. Diagnostic indicators are observations, not a guarantee that a device passes any app's security policy.
+## Report export
+Each run attempts to save a timestamped report under:
+`/sdcard/Download/ASD-Reports/`
 
-## Build
-GitHub Actions builds:
-- `ASD-ADB.zip`
-- `ASD-ROOT.zip`
-- SHA-256 checksums
+If shared storage is unavailable, the script tries:
+`/storage/emulated/0/Download/ASD-Reports/` then `/data/local/tmp/ASD-Reports/`.
 
-Download ZIPs from the successful Actions run's artifacts. Install through Shizuku Next's Modules screen using the ZIP picker. Do not mark the module trusted until you have reviewed its scripts.
+The report is also printed to the module output. If all file destinations are unavailable, console output remains available. Reports may contain device identifiers and build fingerprints; review before sharing.
 
-## Compatibility
-The package follows Shizuku Next's documented module format: root-level `module.prop`, `action.sh`, and module-local scripts. WebUI and background services are intentionally omitted in this first release.
+## Root environment and persistence
+ASD-ROOT verifies UID 0 and reports the SELinux context, KernelSU CLI version when accessible, and relevant filesystem observations. ASD-ADB reports only what its shell identity can see.
+
+Generic shell diagnostics cannot reliably read the ReSuKiSu UI selections for LKM/Jailbreak or prove auto-start configuration. The initial Infinix X6531B test-device baseline is user-confirmed: ReSuKiSu shows LKM and Jailbreak active, Start on boot and automatic Jailbreak enabled, and root becomes active after reboot without manually launching DirtyFrag. This is recorded as a user-reported test observation, not an automatic verdict produced by ASD.
 
 ## Safety
-The module never changes system state. It does not hide root, alter Play Integrity, interfere with banking-app checks, disable SELinux, or modify Verified Boot. Use the report for troubleshooting and legitimate device maintenance.
+All checks are read-only. No boot, system, SELinux, Verified Boot, root-hiding, integrity-spoofing, or banking-app security settings are modified. Diagnostic indicators are observations, not a guarantee that a device passes any app's security policy.
 
-## Project status
-Initial scaffold; CI validation is the first milestone. Physical testing on the target phone is still required.
+## Build
+GitHub Actions builds `ASD-ADB.zip`, `ASD-ROOT.zip`, and SHA-256 checksums. Download ZIPs from the successful Actions run's artifacts and install through Shizuku Next's Modules screen.
+
+## Compatibility
+The package follows Shizuku Next's documented module format: root-level `module.prop`, `action.sh`, and module-local scripts. WebUI and background services are intentionally omitted.
