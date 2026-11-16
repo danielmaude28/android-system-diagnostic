@@ -1,0 +1,7 @@
+id=asd-root
+name=Android System Diagnostic (ROOT)
+version=0.1.0
+versionCode=1
+author=danielmaude28
+description=Read-only extended Android diagnostics; requires root-started Shizuku server.
+usesShellBridge=true
