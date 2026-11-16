@@ -1,0 +1,7 @@
+id=asd-adb
+name=Android System Diagnostic (ADB)
+version=0.1.0
+versionCode=1
+author=danielmaude28
+description=Read-only Android diagnostics using the Shizuku server identity.
+usesShellBridge=true
